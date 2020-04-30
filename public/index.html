@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <title>Sign into weather app</title>
+
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Weather tracking web app"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -24,20 +26,179 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+  
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- Select2 component added before I decide to use React, so just stick with it for now -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <script defer src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.full.js"></script>
+  
+    <!-- Material Design Theming -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.orange-indigo.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+  
+    <link rel="stylesheet" href="%PUBLIC_URL%/main.css">
+    <script src="%PUBLIC_URL%/scripts/properties_%NODE_ENV%.js"></script>
+  
+    <!-- Import and configure the Firebase SDK -->
+    <!-- These scripts are made available when the app is served or deployed on Firebase Hosting -->
+    <!-- If you do not serve/host your project using Firebase Hosting see https://firebase.google.com/docs/web/setup -->
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase-firestore.js"></script>
+
+    <script type="text/javascript">
+
+      function initApp() {
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) { //If logged in
+            //get global app settings
+            var mySettings = firebase.firestore()
+              .collection('settings')
+              .doc(user.uid);
+            mySettings.get().then((settings)=>{
+                  if(!settings.exists){
+                    //create the default settings
+                    mySettings.set({
+                        timezone : -5,
+                        user : user.displayName,
+                        currentPage : "default"
+                    });
+                  }
+              });
+            //Listend for settings changes, redraw when they occur
+            mySettings.onSnapshot(function(snapshot) {
+              window.currentSettings = snapshot.data();
+
+              var event = new CustomEvent('updated:settings', { detail: snapshot.data() });
+              window.dispatchEvent(event);
+            });
+            mySettings.collection("city").onSnapshot(function(snapshot) {
+              window.currentCities = snapshot;
+              let deets = snapshot.docs.map((doc)=>{
+                return doc.data();
+              });
+              var event = new CustomEvent('updated:cities', { detail: deets });
+              window.dispatchEvent(event);
+            });
+          } else {
+            //not logged in, go to signin page
+            window.location.replace("./signin.html");
+          }
+        });
+
+        //placeholder button
+        document.getElementById('sign-out').addEventListener('click', 
+          ()=>{
+            firebase.auth().signOut();
+          }, false);
+      }
+      window.addEventListener("load", initApp);
+      
+      $().ready(function() {
+        $('#search-by-city').on("change", (event)=>{
+            $("#add-city-button").prop('disabled', !$(event.target).data().select2.val());
+        });
+        $("#add-city-button").click(()=>{
+            var currentCity = $("#search-by-city").data().select2.data()[0];
+            if(currentCity){
+              addCity(currentCity);
+            }
+        });
+      });
+      
+      window.addEventListener("action:remove-city", removeCity);
+      function removeCity(event){
+        var cityId = event.detail.wid;
+        firebase.firestore()
+          .collection('settings')
+          .doc(firebase.auth().currentUser.uid)
+          .collection("city")
+          .where("wid", "==", cityId)
+          .limit(1)
+          .get()
+          .then((cities)=>{
+            if(!cities.empty){
+              let result = cities.docs;
+              for(var i = 0; i < result.length; i++){
+                if(result[i].data().wid === cityId){
+                  console.log("removing city",event.detail.name);
+                  result[i].ref.delete();
+                  return ;//cities;
+                }
+              }
+            }
+          });
+      }
+      function addCity(detail){
+          var newCity = {
+            wid : detail.id,
+            country : detail.country,
+            order : 0,
+            name : detail.text
+          };
+
+          var cityRef = firebase.firestore()
+            .collection('settings')
+            .doc(firebase.auth().currentUser.uid)
+            .collection("city");
+
+          cityRef.get().then((cities)=>{
+            if(!cities.empty){
+              let result = cities.docs;
+              for(var i = 0; i < result.length; i++){
+                if(result[i].data().wid === newCity.wid){
+                  console.log("can't add duplicate");
+                  return cities;
+                }
+              }
+              newCity.order = result.length;
+            }
+            cityRef.add(newCity);
+          });
+      }
+    </script>
+
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header">
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+      <!-- Header section containing title -->
+      <header class="mdl-layout__header mdl-color-text--white mdl-color--light-blue-700">
+        <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
+          <div class="mdl-layout__header-row mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--8-col-desktop">
+            <h3>Test Weather App</h3>
+          </div>
+        </div>
+      </header>
+    
+      <main class="mdl-layout__content mdl-color--grey-100">
+        <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
+    
+          <!-- Container for the demo -->
+          <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--12-col-desktop">
+            <div class="mdl-card__title mdl-color--light-blue-600 mdl-color-text--white">
+              <h2 class="mdl-card__title-text">Weather by AccuWeather</h2>
+            </div>
+            <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+              <div id="city-search">
+                <label for="search-by-city"><i class="material-icons">search</i></label>
+                <select id="search-by-city" class="mdl-cell--6-col" data-allow-clear="true"></select>
+                <button disabled class="mdl-button mdl-js-button mdl-button--raised" id="add-city-button" name="addcity">Add</button>
+              </div>
+    
+              <!-- REACT START -->
+              <div id="root"></div>
+    
+            </div>
+          </div>
+          <button class="mdl-button mdl-js-button mdl-button--raised" id="sign-out" name="signout">Sign Out</button>
+        </div>
+      </main>
+    </div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+    <script src="%PUBLIC_URL%/scripts/config.js"></script>
   </body>
 </html>

@@ -1,0 +1,28 @@
+.DetailedCityView.mdl-card {
+    height: 300px;
+}
+.current-day-container.mdl-cell {
+    height: 100%;
+}
+.actions-menu {
+    position: absolute;
+    cursor: pointer;
+}
+.show, .show li.mdl-menu__item {
+    clip:initial;
+    opacity:1;
+    visibility: visible;
+    z-index: 999;
+}
+ul.actions-menu {
+    top:35px;
+    left:35px;
+    padding:0;
+}
+.mdl-list__item{
+    padding: 7px 0 7px 0;
+}
+.day-list.mdl-cell {
+    padding-top:0;
+    margin-top: 0;
+}

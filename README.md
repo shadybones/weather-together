@@ -1,6 +1,10 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## BACK END RUN `node server.js`
+
+Run this to start the backend server, which will connect the front end to the Accuweather API. Listens on port 8082 [http://localhost:8082](http://localhost:8082)
+
+## Available FRONT END Scripts
 
 In the project directory, you can run:
 
