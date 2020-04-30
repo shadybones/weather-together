@@ -37,11 +37,15 @@ function DetailedCityView(props){
         forcastList = city.forcast5.map((day)=>{
             var date = new Date(day.Date);
             var daylist = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+            var iconNumber = day.Day.Icon;
+            if(iconNumber<10){
+                iconNumber = "0"+ iconNumber;
+            }
             //http://developer.accuweather.com/sites/default/files/02-s.png
             return (
                 <div className="mdl-list__item" key={day.Date}>
                     <span className="mdl-list__item-primary-content">
-                        <img alt={day.Day.IconPhrase} src={"//developer.accuweather.com/sites/default/files/"+day.Day.Icon+"-s.png"}></img>
+                        <img alt={day.Day.IconPhrase} src={"//developer.accuweather.com/sites/default/files/"+iconNumber+"-s.png"}></img>
                         <span>{daylist[date.getDay()]+" "+(date.getMonth()+1) + "/" + date.getDate()}</span>
                         <span>
                             Hi: {day.Temperature.Maximum.Value} &deg;F
