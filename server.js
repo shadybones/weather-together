@@ -6,9 +6,10 @@ const http = require('http');
 //http://dataservice.accuweather.com/locations/v1/cities/{countryCode}/search
 ///currentconditions/v1/{locationKey}
 
-//2keys for accuweather
+//3keys for accuweather
 //qhNDktvakmRtedve38QVdR1SfqFGiPFM
 //CumCeUR4ydWUQpvyz5yAMmZkki9bhp77
+//axjdEE6DbaoSFjMOR9lIHk0k4CKIhGmA
 
 //Server which proxies all requests for weather API data, because we
 //should not exposed the Accuweather APIKey (anyone could take it and use it).
@@ -27,7 +28,7 @@ http.createServer(function (client_req, client_res) {
     }
 
     var newurl = client_req.url.substring(4);
-    newurl+= (newurl.includes("?") ? "&" : "?") + "apikey=qhNDktvakmRtedve38QVdR1SfqFGiPFM";
+    newurl+= (newurl.includes("?") ? "&" : "?") + "apikey=axjdEE6DbaoSFjMOR9lIHk0k4CKIhGmA";
 
     var options = {
       hostname: 'dataservice.accuweather.com',
